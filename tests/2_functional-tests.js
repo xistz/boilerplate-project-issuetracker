@@ -38,6 +38,7 @@ suite('Functional Tests', function () {
           );
           assert.equal(res.body.assigned_to, 'Chai and Mocha');
           assert.equal(res.body.status_text, 'In QA');
+          assert.isTrue(res.body.open);
           assert.isDefined(res.body.created_on);
           assert.isDefined(res.body.updated_on);
 
@@ -66,6 +67,7 @@ suite('Functional Tests', function () {
           );
           assert.equal(res.body.assigned_to, '');
           assert.equal(res.body.status_text, '');
+          assert.isTrue(res.body.open);
           assert.isDefined(res.body.created_on);
           assert.isDefined(res.body.updated_on);
 
@@ -92,11 +94,120 @@ suite('Functional Tests', function () {
   });
 
   suite('PUT /api/issues/{project} => text', function () {
-    test('No body', function (done) {});
+    test('No body', function (done) {
+      chai
+        .request(server)
+        .post('/api/issues/test')
+        .send({
+          issue_title: 'Title',
+          issue_text: 'text',
+          created_by: 'Functional Test - No body',
+        })
+        .end(function (err, res) {
+          const { _id } = res.body;
 
-    test('One field to update', function (done) {});
+          chai
+            .request(server)
+            .put('/api/issues/test')
+            .send({
+              _id: _id,
+            })
+            .end(function (err, res) {
+              assert.equal(res.status, 400);
+              assert.equal(res.type, 'application/json');
+              assert.equal(res.body.error, 'no field to update');
 
-    test('Multiple fields to update', function (done) {});
+              done();
+            });
+        });
+    });
+
+    test('One field to update', function (done) {
+      chai
+        .request(server)
+        .post('/api/issues/test')
+        .send({
+          issue_title: 'Title',
+          issue_text: 'text',
+          created_by: 'Functional Test - One field to update',
+        })
+        .end(function (err, res) {
+          const { _id } = res.body;
+
+          chai
+            .request(server)
+            .put('/api/issues/test')
+            .send({
+              _id: _id,
+              open: false,
+            })
+            .end(function (err, res) {
+              assert.equal(res.status, 200);
+              assert.equal(res.type, 'application/json');
+              assert.equal(res.body._id, _id);
+              assert.equal(res.body.issue_title, 'Title');
+              assert.equal(res.body.issue_text, 'text');
+              assert.equal(
+                res.body.created_by,
+                'Functional Test - One field to update'
+              );
+              assert.equal(res.body.assigned_to, '');
+              assert.equal(res.body.status_text, '');
+              assert.isFalse(res.body.open);
+              assert.isDefined(res.body.created_on);
+              assert.isAbove(
+                new Date(res.body.updated_on),
+                new Date(res.body.created_on)
+              );
+
+              done();
+            });
+        });
+    });
+
+    test('Multiple fields to update', function (done) {
+      chai
+        .request(server)
+        .post('/api/issues/test')
+        .send({
+          issue_title: 'Title',
+          issue_text: 'text',
+          created_by: 'Functional Test - Multiple fields to update',
+        })
+        .end(function (err, res) {
+          const { _id } = res.body;
+
+          chai
+            .request(server)
+            .put('/api/issues/test')
+            .send({
+              _id: _id,
+              assigned_to: 'Chai and Mocha',
+              status_text: 'In QA',
+            })
+            .end(function (err, res) {
+              assert.equal(res.status, 200);
+              assert.equal(res.type, 'application/json');
+              assert.equal(res.body._id, _id);
+              assert.equal(res.body.issue_title, 'Title');
+              assert.equal(res.body.issue_text, 'text');
+              assert.equal(
+                res.body.created_by,
+                'Functional Test - Multiple fields to update'
+              );
+              assert.equal(res.body.assigned_to, 'Chai and Mocha');
+              assert.equal(res.body.status_text, 'In QA');
+              assert.isTrue(res.body.open);
+              assert.isDefined(res.body.created_on);
+              assert.isAbove(
+                new Date(res.body.updated_on),
+                new Date(res.body.created_on)
+              );
+
+              done();
+            });
+        });
+    });
   });
 
   suite(

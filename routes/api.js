@@ -8,9 +8,8 @@
 
 'use strict';
 
-var expect = require('chai').expect;
-var MongoClient = require('mongodb').MongoClient;
-var ObjectId = require('mongodb').ObjectID;
+const expect = require('chai').expect;
+const { MongoClient, ObjectId } = require('mongodb');
 
 const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
 
@@ -77,8 +76,51 @@ module.exports = function (app) {
       res.status(201).json(issue);
     })
 
-    .put(function (req, res) {
+    .put(async (req, res) => {
       const { project } = req.params;
+      const {
+        _id,
+        issue_title,
+        issue_text,
+        created_by,
+        assigned_to,
+        status_text,
+        open,
+      } = req.body;
+
+      const valid =
+        _id &&
+        (issue_title ||
+          issue_text ||
+          created_by ||
+          assigned_to ||
+          status_text ||
+          open !== undefined);
+
+      if (!valid) {
+        res.status(400).json({ error: 'no field to update' });
+        return;
+      }
+
+      const db = (await client).db('issuetracker');
+
+      const { value: issue } = await db.collection('issues').findOneAndUpdate(
+        { _id: ObjectId(_id), project },
+        {
+          $set: {
+            ...(issue_title && { issue_title }),
+            ...(issue_text && { issue_text }),
+            ...(created_by && { created_by }),
+            ...(assigned_to && { assigned_to }),
+            ...(status_text && { status_text }),
+            ...(open !== undefined && { open }),
+            updated_on: new Date().toISOString(),
+          },
+        },
+        { returnOriginal: false }
+      );
+
+      res.json(issue);
     })
 
     .delete(function (req, res) {
