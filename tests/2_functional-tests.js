@@ -221,22 +221,72 @@ suite('Functional Tests', function () {
           .end(function (err, res) {
             assert.equal(res.status, 200);
             assert.isArray(res.body);
-            assert.property(res.body[0], 'issue_title');
-            assert.property(res.body[0], 'issue_text');
-            assert.property(res.body[0], 'created_on');
-            assert.property(res.body[0], 'updated_on');
-            assert.property(res.body[0], 'created_by');
-            assert.property(res.body[0], 'assigned_to');
-            assert.property(res.body[0], 'open');
-            assert.property(res.body[0], 'status_text');
-            assert.property(res.body[0], '_id');
+            res.body.forEach((issue) => {
+              assert.property(issue, 'issue_title');
+              assert.property(issue, 'issue_text');
+              assert.property(issue, 'created_on');
+              assert.property(issue, 'updated_on');
+              assert.property(issue, 'created_by');
+              assert.property(issue, 'assigned_to');
+              assert.property(issue, 'open');
+              assert.property(issue, 'status_text');
+              assert.property(issue, '_id');
+            });
+
             done();
           });
       });
 
-      test('One filter', function (done) {});
+      test('One filter', function (done) {
+        chai
+          .request(server)
+          .get('/api/issues/test')
+          .query({
+            open: false,
+          })
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isArray(res.body);
+            res.body.forEach((issue) => {
+              assert.property(issue, 'issue_title');
+              assert.property(issue, 'issue_text');
+              assert.property(issue, 'created_on');
+              assert.property(issue, 'updated_on');
+              assert.property(issue, 'created_by');
+              assert.property(issue, 'assigned_to');
+              assert.isFalse(issue.open);
+              assert.property(issue, 'status_text');
+              assert.property(issue, '_id');
+            });
+            done();
+          });
+      });
 
-      test('Multiple filters (test for multiple fields you know will be in the db for a return)', function (done) {});
+      test('Multiple filters (test for multiple fields you know will be in the db for a return)', function (done) {
+        chai
+          .request(server)
+          .get('/api/issues/test')
+          .query({
+            open: false,
+            assigned_to: 'Chai and Mocha',
+          })
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isArray(res.body);
+            res.body.forEach((issue) => {
+              assert.property(issue, 'issue_title');
+              assert.property(issue, 'issue_text');
+              assert.property(issue, 'created_on');
+              assert.property(issue, 'updated_on');
+              assert.property(issue, 'created_by');
+              assert.equal(issue.assigned_to, 'Chai and Mocha');
+              assert.isTrue(issue.open);
+              assert.property(issue, 'status_text');
+              assert.property(issue, '_id');
+            });
+            done();
+          });
+      });
     }
   );
 

@@ -31,11 +31,34 @@ module.exports = function (app) {
     .get(async (req, res) => {
       const { project } = req.params;
 
+      const {
+        _id,
+        issue_title,
+        issue_text,
+        created_by,
+        assigned_to,
+        status_text,
+        open,
+        created_on,
+        updated_on,
+      } = req.query;
+
       const db = (await client).db('issuetracker');
 
       const issues = await db
         .collection('issues')
-        .find({ project: project })
+        .find({
+          project,
+          ...(_id && { _id: ObjectId(_id) }),
+          ...(issue_title && { issue_title }),
+          ...(issue_text && { issue_text }),
+          ...(created_by && { created_by }),
+          ...(assigned_to && { assigned_to }),
+          ...(status_text && { status_text }),
+          ...(open !== undefined && { open }),
+          ...(created_on && { created_on }),
+          ...(updated_on && { updated_on }),
+        })
         .toArray();
 
       res.json(issues);
