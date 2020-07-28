@@ -110,7 +110,7 @@ suite('Functional Tests', function () {
             .request(server)
             .put('/api/issues/test')
             .send({
-              _id: _id,
+              _id,
             })
             .end(function (err, res) {
               assert.equal(res.status, 400);
@@ -138,7 +138,7 @@ suite('Functional Tests', function () {
             .request(server)
             .put('/api/issues/test')
             .send({
-              _id: _id,
+              _id,
               open: false,
             })
             .end(function (err, res) {
@@ -181,7 +181,7 @@ suite('Functional Tests', function () {
             .request(server)
             .put('/api/issues/test')
             .send({
-              _id: _id,
+              _id,
               assigned_to: 'Chai and Mocha',
               status_text: 'In QA',
             })
@@ -291,8 +291,68 @@ suite('Functional Tests', function () {
   );
 
   suite('DELETE /api/issues/{project} => text', function () {
-    test('No _id', function (done) {});
+    test('No _id', function (done) {
+      chai
+        .request(server)
+        .post('/api/issues/test')
+        .send({
+          issue_title: 'Title',
+          issue_text: 'text',
+          created_by: 'Functional Test - Multiple fields to update',
+        })
+        .end(function (err, res) {
+          const { _id } = res.body;
 
-    test('Valid _id', function (done) {});
+          chai
+            .request(server)
+            .delete('/api/issues/test')
+            .send({})
+            .end(function (err, res) {
+              assert.equal(res.status, 400);
+              assert.equal(res.type, 'application/json');
+              assert.equal(res.body.error, 'missing _id');
+
+              done();
+            });
+        });
+    });
+
+    test('Valid _id', function (done) {
+      chai
+        .request(server)
+        .post('/api/issues/test')
+        .send({
+          issue_title: 'Title',
+          issue_text: 'text',
+          created_by: 'Functional Test - Multiple fields to update',
+        })
+        .end(function (err, res) {
+          const { _id } = res.body;
+
+          chai
+            .request(server)
+            .delete('/api/issues/test')
+            .send({
+              _id,
+            })
+            .end(function (err, res) {
+              assert.equal(res.status, 204);
+
+              chai
+                .request(server)
+                .get('/api/issues/test')
+                .query({
+                  _id,
+                })
+                .end(function (err, res) {
+                  assert.equal(res.status, 200);
+                  assert.isArray(res.body);
+                  assert.equal(res.body.length, 0);
+
+                  done();
+                });
+            });
+        });
+    });
   });
 });

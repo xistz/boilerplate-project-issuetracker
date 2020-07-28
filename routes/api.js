@@ -146,7 +146,18 @@ module.exports = function (app) {
       res.json(issue);
     })
 
-    .delete(function (req, res) {
+    .delete(async (req, res) => {
       const { project } = req.params;
+      const { _id } = req.body;
+
+      if (!_id) {
+        res.status(400).json({ error: 'missing _id' });
+        return;
+      }
+
+      const db = (await client).db('issuetracker');
+      await db.collection('issues').deleteOne({ _id: ObjectId(_id) });
+
+      res.status(204).end();
     });
 };
